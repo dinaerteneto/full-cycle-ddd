@@ -12,18 +12,13 @@ import CustomerRepository from "./customer.repository"
 import OrderRepository from "./order.repository"
 import ProductRepository from "./product.repository"
 import { v4 as uuid } from "uuid"
+import faker from "@faker-js/faker"
 
 describe("Order repository test", () => {
 
     let sequelize: Sequelize
 
     beforeEach(async () => {
-        sequelize = new Sequelize({
-            dialect: 'sqlite',
-            storage: ':memory',
-            logging: false,
-            sync: { force: true }
-        })
         sequelize.addModels([
             CustomerModel,
             ProductModel,
@@ -33,21 +28,32 @@ describe("Order repository test", () => {
         await sequelize.sync()
     })
 
-    afterEach(async () => {
+    beforeAll(async () => {
+        sequelize = new Sequelize({
+            dialect: 'sqlite',
+            storage: ':memory',
+            logging: false,
+            sync: { force: true }
+        })
+    })
+
+    afterAll(async () => {
+        await sequelize.dropAllSchemas({ logging: false })
         await sequelize.close()
     })
 
     const makeSut = async () => {
         //create customer
         const customerRepository = new CustomerRepository()
-        const customer = new Customer(uuid(), "any customer name")
-        const address = new Address("any address", "any zipcode", "any country", "any city", 100)
+        const customer = new Customer(uuid(), faker.name.firstName())
+        const address = new Address(faker.address.streetAddress(), faker.address.zipCode(), faker.address.country(), faker.address.city(), faker.datatype.number())
+
         customer.changeAddress(address)
         await customerRepository.create(customer)
 
         //create product
         const productRepository = new ProductRepository()
-        const product = new Product(uuid(), "any product name", 1000)
+        const product = new Product(uuid(), faker.commerce.product(), parseFloat(faker.commerce.price()))
         await productRepository.create(product)
 
         //create items for order
@@ -90,12 +96,12 @@ describe("Order repository test", () => {
         const { customer, order, orderRepository } = await makeSut()
         // change attribute product
         const productRepository = new ProductRepository()
-        const product = new Product("other product id", "other product name", 2000)
+        const product = new Product(uuid(), faker.commerce.product(), parseFloat(faker.commerce.price()))
         await productRepository.create(product)
 
         // remove all itens and add new item
         order.removeAllItems()
-        const item = new OrderItem("any item id", product.name, product.price, product.id, 2)
+        const item = new OrderItem(uuid(), product.name, product.price, product.id, faker.datatype.number())
         order.addItem(item)
 
         // update order with new item

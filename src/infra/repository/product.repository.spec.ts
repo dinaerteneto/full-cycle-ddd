@@ -2,44 +2,52 @@ import { Sequelize } from "sequelize-typescript"
 import Product from "../../domain/entity/product"
 import ProductModel from "../db/sequelize/model/product.model"
 import ProductRepository from "./product.repository"
+import { v4 as uuid } from "uuid"
+import { faker as faker } from "@faker-js/faker"
 
 describe("Product repository test", () => {
 
     let sequelize: Sequelize
 
     beforeEach(async () => {
+        sequelize.addModels([ProductModel])
+        await sequelize.sync()
+    })
+
+    beforeAll(async () => {
         sequelize = new Sequelize({
             dialect: 'sqlite',
             storage: ':memory',
             logging: false,
             sync: { force: true }
         })
-        sequelize.addModels([ProductModel])
-        await sequelize.sync()
     })
 
-    afterEach(async () => {
+    afterAll(async () => {
+        await sequelize.dropAllSchemas({ logging: false })
         await sequelize.close()
     })
 
+
+
     it("should create a product", async () => {
         const productRepository = new ProductRepository()
-        const product = new Product("any product id", "any product name", 100)
+        const product = new Product(uuid(), faker.commerce.product(), parseFloat(faker.commerce.price()))
         await productRepository.create(product)
         const productModel = await ProductModel.findOne({ where: { id: product.id } })
         expect(productModel.toJSON()).toStrictEqual({
             id: product.id,
-            name: "any product name",
-            price: 100
+            name: product.name,
+            price: product.price
         })
     })
 
     it("should update a product", async () => {
         const productRepository = new ProductRepository()
-        const product = new Product("any product id", "any product name", 100)
+        const product = new Product(uuid(), faker.commerce.product(), parseFloat(faker.commerce.price()))
         await productRepository.create(product)
 
-        product.changeName("product name updated")
+        product.changeName(faker.commerce.product())
         product.changePrice(200)
         await productRepository.update(product)
 
@@ -47,14 +55,14 @@ describe("Product repository test", () => {
 
         expect(productModel.toJSON()).toStrictEqual({
             id: product.id,
-            name: "product name updated",
+            name: product.name,
             price: 200
         })
     })
 
     it("should find a product by id", async () => {
         const productRepository = new ProductRepository()
-        const product = new Product("any product id", "any product name", 100)
+        const product = new Product(uuid(), faker.commerce.product(), parseFloat(faker.commerce.price()))
         await productRepository.create(product)
 
         const productModel = await ProductModel.findOne({ where: { id: product.id } })
@@ -70,8 +78,8 @@ describe("Product repository test", () => {
     it("should find all product", async () => {
         const productRepository = new ProductRepository()
 
-        const product1 = new Product("any product id", "any product name", 100)
-        const product2 = new Product("any product id", "other product name", 200)
+        const product1 = new Product(uuid(), faker.commerce.product(), parseFloat(faker.commerce.price()))
+        const product2 = new Product(uuid(), faker.commerce.product(), parseFloat(faker.commerce.price()))
         await productRepository.create(product1)
         await productRepository.create(product2)
 
