@@ -12,4 +12,15 @@ describe("Domain events tests", () => {
         expect(eventDispatcher.getEventHandlers["ProductCreatedEvent"][0]).toMatchObject(eventHandler)
     });
 
+    it("should unrgeister an event handle", () => {
+        const eventDispatcher = new EventDispatcher()
+        const eventHandler = new SendEmailWherProcutIsCreatedEventHandler()
+        eventDispatcher.register("ProductCreatedEvent", eventHandler)
+
+        expect(eventDispatcher.getEventHandlers["ProductCreatedEvent"][0]).toMatchObject(eventHandler)
+
+        eventDispatcher.unregister("ProductCreatedEvent", eventHandler)
+        expect(eventDispatcher.getEventHandlers["ProductCreatedEvent"].length).toBe(0)
+    })
+
 })
