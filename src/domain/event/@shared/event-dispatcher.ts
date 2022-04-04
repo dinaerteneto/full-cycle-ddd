@@ -25,5 +25,7 @@ export default class EventDispatcher implements EventDispatcherInterface {
             this.eventHandlers[eventName].splice(index, 1);
         }
     }
-    unregisterAll(): void { }
+    unregisterAll(): void {
+        this.eventHandlers = {};
+    }
 }
